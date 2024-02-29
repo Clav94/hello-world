@@ -1,0 +1,79 @@
+---
+title: "Analyse statistique entre sexes"
+author: "Aveneau / lange"
+format: pdf
+editor: visual
+---
+
+## Description du projet
+
+L'idée est de comparer s'il existe des différences de phénotypes cliniques entre hommes et femmes dans la MCL.
+
+## Charger le jeu de données
+
+```{r}
+mcl <- read.csv2("data/mcl.csv")
+```
+
+Créer les paramètres nécessaires à l'analyse des données
+
+```{r}
+mcl$sexe <- factor(mcl$sexe, levels=c(1,2), labels=c("Woman", "Man"))
+mcl$etude <- factor (mcl$etude, levels=c(1:4), labels=c("No qualification", "Lower secondary education", "Upper secondary education", "Higher education"))
+mcl$tabac <- factor (mcl$tabac, levels=c(0,1), labels=c("No", "Yes"))
+mcl$hta <- factor (mcl$hta, levels=c(0,1), labels=c("No", "Yes"))
+mcl$diabete <- factor (mcl$diabete, levels=c(0,1), labels=c("No", "Yes"))
+mcl$dyslipidemie <- factor (mcl$dyslipidemie, levels=c(0,1), labels=c("No", "Yes"))
+mcl$saos <- factor (mcl$saos, levels=c(0,1), labels=c("No", "Yes"))
+mcl$mabio <- factor (mcl$mabio, levels=c(0,1), labels=c("No", "Yes"))
+mcl$rbd <- factor (mcl$rbd, levels=c(0,1), labels=c("No", "Yes"))
+mcl$park <- factor (mcl$park, levels=c(0,1), labels=c("No", "Yes"))
+```
+
+## Test univarié entre sexe et troubles du sommeil
+
+```{r}
+mod <- glm (rbd ~ sexe, data = mcl, family = "binomial")
+summary (mod)
+exp(coefficients(mod))
+```
+
+## Segmentation en fonction du statut mabio
+
+Utilisation de la fonction **subset**
+
+```{r}
+mcl_ma <- subset(mcl, mabio=="Yes")
+mcl_nonma <- subset(mcl, mabio=="No")
+```
+
+## Calcul de modèles univariés
+
+```{r}
+
+#Pour ceux MA+
+mod_ma <- glm (rbd ~ sexe, data = mcl_ma, family = "binomial")
+summary (mod_ma)
+exp(coefficients(mod_ma))
+```
+
+```{r}
+#Pour ceux MA-
+mod_nonma <- glm (rbd ~ sexe, data = mcl_nonma, family = "binomial")
+summary (mod_nonma)
+exp(coefficients(mod_nonma))
+```
+
+## Conclusion
+
+En gros, ici, la présence de biomarqueurs MA est un facteur d'intéraction négatif sur la relation sexe / rbd. L'absence de biomarqueurs MA amplifie l'association entre le sexe masculin et la présence de rbd.
+
+Pourquoi est-ce qu'on perd en significativité ?
+
+Car il y a une perte d'effectif dans l'analyse :
+
+```{r}
+table(mcl$sexe, mcl$mabio, useNA = "always")
+```
+
+L'analyse sans prise en compte des biomarqueurs le fait sur les 310 patients, celle en adaptant sur les biomarqueurs sur beaucoup moins de patients.
